@@ -1,4 +1,4 @@
-# Brad Bitt, mais le jeu — prototype 20
+# Brad Bitt, mais le jeu — prototype 21
 
 Le niveau d'introduction devient un vrai parcours, avec tout ce qui l'entoure :
 écran d'accueil, animation des studios, menu jouable, musique, sauvegarde et
@@ -2483,3 +2483,117 @@ c'est que Brad *le frappe*, pas qu'il le tue en trois secondes.
 - **le boss ne quitte jamais le cadre** ;
 - **Brad reste à portée au lieu de courir au mur** (moins de 150 px) ;
 - **et il les frappe vraiment**.
+
+---
+
+# Prototype 21 — le duel du Séraphin, et la manette
+
+## 1. Le monstre restait planté sur Brad
+
+Diagnostic avant correction, sur le plan du Serra-Séraphin :
+
+```
+s=0.33  bx=5325  vy=-232  sol=false   ox=5340   chevauche
+s=0.67  bx=5339  vx=0     sol=true    ox=5331   chevauche
+s=1.00  bx=5339  vx=0     sol=true    ox=5327   chevauche
+s=2.00  bx=5339  vx=0     sol=true    ox=5326   chevauche
+s=3.00  bx=5339  vx=0     sol=true    ox=5322   chevauche
+```
+
+Brad saute, retombe sur l'échafaudage, **et ne bouge plus d'un pixel pendant
+2,5 secondes** pendant que le Séraphin flotte à travers lui. **90 % des images
+du plan** avec les deux sprites l'un dans l'autre.
+
+**La cause :** la distance de maintien se mesurait **de centre à centre**. Le
+Séraphin fait 58 px de large ; « s'arrêter à 44 px de son centre » veut dire
+s'arrêter *dedans*. Et comme Brad est invincible pendant la bande-annonce, rien
+ne l'en repoussait.
+
+**La correction :** la portée se calcule à partir des demi-largeurs des deux
+corps, donc elle s'adapte à la taille du boss. **Le chevauchement est tombé de
+90 % à 0–7 %.**
+
+J'avais d'abord supposé que c'était l'invincibilité qui empêchait le recul de
+les séparer. **C'était faux** — la mesure l'a montré : une fois la portée
+calculée entre les bords, le chevauchement disparaît sans toucher à
+l'invincibilité. Je l'ai donc laissée, parce qu'elle protège la garantie
+« Brad ne tombe jamais » dans les plans de niveau.
+
+**Et un rythme de duel** par-dessus : Brad avance, frappe, se dégage, revient.
+Les trois chiffres du cycle sont mesurés, pas choisis — quatre réglages
+comparés sur les trois plans, en comptant les coups portés, le chevauchement et
+les images où Brad ne bouge pas :
+
+| réglage | niveau 3 | niveau 6 | niveau 9 |
+|---|---|---|---|
+| sans recul | 2 coups · 0 % collés | 0 · 7 % | 1 · 0 % |
+| 0,85 / 24 px | 3 · 0 % | 0 · 7 % | 4 · 0 % |
+| **0,75 / 36 px** | **5 · 0 %** | **1 · 7 %** | **3 · 0 %** |
+| 0,62 / 54 px | 2 · 0 % | 6 · 7 % | 2 · 0 % |
+
+Le recul ne change pas le chevauchement — il sert au mouvement, c'est-à-dire à
+empêcher l'image de se figer.
+
+### Pourquoi le test compte la somme des coups
+
+Sur le plan du Séraphin, Brad est **en l'air 92 % du temps** — il rebondit sur
+sa tête — et le boss est dans sa zone de coup **96 % du temps**. Ce qui varie,
+c'est si la copie touchée est la vraie : le Séraphin se duplique, et frapper
+une fausse copie ne lui fait rien. Exiger un coup enregistré sur *ce* boss-là
+reviendrait à exiger de tomber sur la bonne copie en trois secondes, donc à
+tirer au sort. Le test juge donc **la somme sur les trois boss**.
+
+## 2. La manette
+
+Tu voulais annoncer « écran tactile, clavier souris et manette physique » sur
+le carton final. **Le tactile et le clavier existaient, la manette non.**
+Je ne pouvais pas l'écrire sans que ce soit faux — je l'ai donc ajoutée.
+
+Elle ne duplique rien. Le corps du gestionnaire clavier est devenu une fonction
+nommée, `auClavier`, et la manette lui passe des événements de la même forme
+(`{ code, key }`). Elle hérite donc d'un coup de **toute** la navigation du
+jeu : menus, boutique, jukebox, pause, combat final, générique,
+bande-annonce — sans une ligne réécrite. Un écran ajouté plus tard sera jouable
+à la manette sans qu'on y pense.
+
+| manette | équivaut à | effet |
+|---|---|---|
+| stick gauche et croix | flèches | se déplacer, naviguer |
+| bouton du bas (A / ✕) | Espace | sauter, valider |
+| bouton de droite (B / ○) | Échap | retour, pause |
+| bouton de gauche (X / □) | X | frapper |
+| bouton du haut (Y / △) | C | onde de choc |
+| L1 / R1 | Maj | courir |
+| Start | Échap | pause |
+
+Détails qui comptent : un bouton **maintenu** n'envoie qu'un seul événement (sans
+ça le menu défilerait à soixante entrées par seconde) ; le stick a une zone
+morte de 0,45 ; et **débrancher la manette relâche tout**, sinon Brad
+continuerait de courir vers la droite pour toujours.
+
+## 3. Le carton final
+
+```
+              IMAGINe Studio  ×  HwR Engine
+        Écran tactile · Clavier et souris · Manette
+               Mobile  ·  PC  ·  Console *
+        * par le support des manettes, dans le navigateur
+```
+
+L'étoile dit exactement ce qu'elle vaut : le jeu n'est pas publié sur console,
+il se joue au navigateur avec une manette. Écrire « Consoles » tout court
+serait une promesse que le jeu ne tient pas.
+
+## Vérification
+
+**275 vérifications, 0 échec**, deux exécutions consécutives identiques. Dix
+sont nouvelles :
+
+- **le monstre ne reste pas planté sur lui** (moins de 30 % d'images collées) ;
+- **le duel ne se fige jamais** (moins de 45 % d'images immobiles) ;
+- le stick gauche fait marcher Brad ; le bouton du bas fait sauter ;
+- **un bouton maintenu ne se répète pas** ;
+- les boutons frappe, onde et course répondent ;
+- **débrancher la manette relâche tout** ;
+- la croix navigue dans le menu, le bouton du bas valide, celui de droite sert
+  d'Échap.

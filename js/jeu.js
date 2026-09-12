@@ -2505,6 +2505,10 @@ function boucle(maintenant) {
   if (delta > 0.25) delta = 0.25;
   fps += (1 / Math.max(delta, 1e-4) - fps) * 0.1;
 
+  // La manette est interrogee une fois par image, avant la simulation : elle
+  // se lit, elle ne s'ecoute pas. Voir le bas de js/entrees.js.
+  majManette();
+
   accumulateur += delta;
   let garde = 0;
   while (accumulateur >= PAS && garde++ < 8) {

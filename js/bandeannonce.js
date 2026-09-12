@@ -291,7 +291,15 @@ function cadrerBA() {
 }
 
 /* Brad ne doit jamais mourir pendant un plan : une bande-annonce qui bascule
-   sur l'ecran de mort au milieu d'un montage, c'est fini. */
+   sur l'ecran de mort au milieu d'un montage, c'est fini. Il est donc
+   invincible partout, y compris dans les arenes.
+
+   J'ai essaye de lui rendre le recul dans les arenes, en pensant que c'etait
+   lui qui separerait Brad du Seraphin. Ce n'etait pas la cause : la mesure de
+   la distance l'etait (voir combattreBA). Une fois la portee calculee entre
+   les bords, le chevauchement est tombe de 90 % a 7 % sans toucher a
+   l'invincibilite — et la garder evite qu'un coup encaisse projette Brad dans
+   un trou au milieu d'un plan de niveau. */
 function rendreBradIntouchable() {
   brad.pvMax = 99; brad.pv = 99;
   brad.invincible = 9999;
@@ -416,7 +424,38 @@ function appuiSousBA(px, ligne) {
    Pendant un bonneteau (le Seraphin se duplique), il vise la copie qui EST le
    boss — sinon la bande-annonce le montrerait en train de frapper des
    mirages. */
-const BA_PORTEE = 44;        // distance de maintien, en pixels
+/* LA DISTANCE SE MESURE ENTRE LES BORDS, PAS ENTRE LES CENTRES.
+
+   Premiere version : « s'arreter a 44 px ». Mesures de centre a centre — or le
+   Serra-Seraphin est large. Brad s'arretait donc a 13 px de son centre,
+   c'est-a-dire DEDANS, et comme il etait invincible rien ne l'en repoussait :
+   il restait plante la, immobile, le monstre superpose a lui. 90 % des images
+   du plan avec les deux sprites l'un dans l'autre.
+
+   Deux corrections. La portee se calcule maintenant a partir des demi-largeurs
+   des deux corps, donc elle s'adapte a la taille du boss. Et le combat a un
+   RYTHME : Brad avance, frappe, recule, revient. C'est ce que fait un joueur,
+   c'est ce qui empeche l'image de se figer, et c'est ce qui fait qu'un plan de
+   deux secondes ressemble a un duel plutot qu'a une collision. */
+const BA_CYCLE = 1.0;        // duree d'un aller-retour, en secondes
+const BA_MARGE = 12;         // jeu entre les deux corps quand il frappe
+const BA_RECUL = 36;         // de combien il se degage entre deux assauts
+const BA_ASSAUT = 0.75;      // part du cycle passee a l'attaque
+const BA_FENETRE = 34;       // au-dela de la portee, il ne frappe plus
+
+/* Les trois derniers chiffres sont mesures, pas choisis. Quatre reglages ont
+   ete compares sur les trois plans de boss, en comptant les coups portes, le
+   chevauchement des sprites et les images ou Brad ne bouge pas :
+
+     sans recul      3: 2 coups  0% colles   |  6: 0  7%  |  9: 1  0%
+     0,85 / 24 px    3: 3        0%          |  6: 0  7%  |  9: 4  0%
+     0,75 / 36 px    3: 5        0%          |  6: 1  7%  |  9: 3  0%
+     0,62 / 54 px    3: 2        0%          |  6: 6  7%  |  9: 2  0%
+
+   Le chevauchement ne depend pas du recul — il est tombe de 90 % a 0-7 % le
+   jour ou la portee s'est calculee entre les BORDS. Le recul, lui, sert au
+   mouvement : c'est ce qui empeche l'image de se figer. 0,75 / 36 garde Brad
+   engage le plus longtemps sans qu'il se colle. */
 
 function combattreBA(dt) {
   const b = arene.boss;
@@ -426,26 +465,38 @@ function combattreBA(dt) {
   const cible = vraie || b;
   const cx = cible.x + cible.w / 2;
   const dx = cx - (brad.x + brad.w / 2);
-  const loin = Math.abs(dx) > BA_PORTEE;
+  const d = Math.abs(dx);
+  const vers = Math.sign(dx) || 1;
 
-  entrees.droite = loin && dx > 0;
-  entrees.gauche = loin && dx < 0;
-  entrees.courir = Math.abs(dx) > BA_PORTEE * 2.2;
-  // Au contact, on garde l'orientation de l'approche : relacher la direction
-  // evite l'oscillation sur place.
+  // Portee de frappe : les deux corps se touchent presque, sans se traverser.
+  const portee = (brad.w + cible.w) / 2 + BA_MARGE;
+  // Phase du cycle : les deux premiers tiers a l'assaut, le dernier en retrait.
+  const phase = (bandeAnnonce.age % BA_CYCLE) / BA_CYCLE;
+  const assaut = phase < BA_ASSAUT;
+  const voulue = assaut ? portee : portee + BA_RECUL;
 
-  const cadence = Math.floor(bandeAnnonce.age / 0.30);
-  const frappe = cadence !== Math.floor((bandeAnnonce.age - dt) / 0.30);
-  entrees.attaque = (bandeAnnonce.age * 1000 | 0) % 300 < 130;
+  // On avance ou on recule selon l'ecart a la distance voulue. La zone morte
+  // evite qu'il tremble sur place autour de sa cible.
+  let sens = 0;
+  if (d > voulue + 8) sens = vers;
+  else if (d < voulue - 8) sens = -vers;
+  entrees.droite = sens > 0;
+  entrees.gauche = sens < 0;
+  entrees.courir = Math.abs(d - voulue) > 70;
+
+  // Il ne frappe que pendant l'assaut, et seulement s'il est a portee.
+  const cadence = 0.30;
+  const frappe = assaut && d < portee + BA_FENETRE &&
+    Math.floor(bandeAnnonce.age / cadence) !== Math.floor((bandeAnnonce.age - dt) / cadence);
+  entrees.attaque = assaut && (bandeAnnonce.age * 1000 | 0) % 300 < 130;
   if (frappe) attaquePresseeCeTick = true;
 
   // On saute quand le centre de la cible est au-dessus du sien, et seulement
   // quand on est presque dessous : sauter de loin ne sert a rien.
-  const centreCible = cible.y + cible.h / 2;
-  const dessus = centreCible < brad.y + brad.h / 2 - 6;
-  const proche = Math.abs(dx) < 70;
-  if (brad.auSol && proche && dessus) { entrees.saut = true; sautPresseCeTick = true; }
-  else if (!brad.auSol && brad.vy < 0) entrees.saut = true;
+  const dessus = cible.y + cible.h / 2 < brad.y + brad.h / 2 - 6;
+  if (brad.auSol && assaut && d < portee + 30 && dessus) {
+    entrees.saut = true; sautPresseCeTick = true;
+  } else if (!brad.auSol && brad.vy < 0) entrees.saut = true;
   else entrees.saut = false;
   return true;
 }
@@ -772,18 +823,41 @@ const MENTION_IA_BA = [
   'de ce jeu. L\'idée et le concept général ont été imaginés par un humain.',
 ];
 
+/* LES SUPPORTS.
+
+   Trois facons de jouer, et elles existent toutes les trois dans le code :
+   les boutons tactiles (js/entrees.js, zone `tactile`), le clavier et la
+   souris, et la manette (le module en bas du meme fichier).
+
+   « Console » porte une etoile, et l'etoile dit exactement ce qu'elle vaut :
+   le jeu n'est pas publie sur console, il se joue au navigateur avec une
+   manette. Ecrire « Consoles » tout court serait une promesse que le jeu ne
+   tient pas. */
+const SUPPORTS_BA = 'Mobile  ·  PC  ·  Console *';
+const ETOILE_BA = '* par le support des manettes, dans le navigateur';
+
 function planStudiosBA(p) {
   const e = entreeCarton();
   ctx.globalAlpha = e.alpha;
   if (logos.imagine) {
-    const w = 156, h = logos.imagine.height * w / logos.imagine.width;
-    ctx.drawImage(logos.imagine, LARGEUR / 2 - w / 2, 96, w, h);
+    const w = 146, h = logos.imagine.height * w / logos.imagine.width;
+    ctx.drawImage(logos.imagine, LARGEUR / 2 - w / 2, 74, w, h);
   }
-  dessinerLogoHwr(LARGEUR / 2, 196, 64);
-  texteCentre('IMAGINe Studio  ×  HwR Engine', 248,
+  dessinerLogoHwr(LARGEUR / 2, 166, 58);
+  texteCentre('IMAGINe Studio  ×  HwR Engine', 214,
               '11px system-ui, sans-serif', 'rgba(255,255,255,.55)');
+
+  // Un filet, puis les supports : c'est une information, pas une signature.
+  ctx.fillStyle = 'rgba(255,255,255,.10)';
+  ctx.fillRect(LARGEUR / 2 - 110, 230, 220, 1);
+  texteCentre('Écran tactile  ·  Clavier et souris  ·  Manette', 250,
+              '10px system-ui, sans-serif', 'rgba(255,255,255,.5)');
+  texteCentre(SUPPORTS_BA, 270, 'bold 13px system-ui, sans-serif', '#e8b62c');
+  texteCentre(ETOILE_BA, 286, 'italic 9px system-ui, sans-serif',
+              'rgba(255,255,255,.34)');
+
   MENTION_IA_BA.forEach((ligne, i) =>
-    texteCentre(ligne, 278 + i * 15, '10px system-ui, sans-serif',
-                'rgba(255,255,255,.42)'));
+    texteCentre(ligne, 312 + i * 13, '9px system-ui, sans-serif',
+                'rgba(255,255,255,.34)'));
   ctx.globalAlpha = 1;
 }

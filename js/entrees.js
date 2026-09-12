@@ -58,7 +58,13 @@ function relacherTout() {
   Object.keys(entrees).forEach(k => { entrees[k] = false; });
 }
 
-addEventListener('keydown', e => {
+/* Le corps du gestionnaire est une FONCTION NOMMEE, et pas seulement pour la
+   lisibilite : la manette s'en sert. Elle fabrique des evenements de la meme
+   forme ({ code, key }) et les passe ici, ce qui lui donne d'un coup toute la
+   navigation du jeu — menus, boutique, jukebox, pause, combat final,
+   generique, bande-annonce — sans en reecrire une ligne. */
+function auClavier(e) {
+  if (!e.preventDefault) e.preventDefault = () => {};
   if (e.code === 'F1') { e.preventDefault(); basculerPanneau(); return; }
   if (TOUCHES_DEFILEMENT.includes(e.code)) e.preventDefault();
 
@@ -306,9 +312,10 @@ addEventListener('keydown', e => {
   if (!a) return;
   if (FRONTS[a] && !entrees[a]) marquerFront(a);
   entrees[a] = true;
-});
+}
+addEventListener('keydown', auClavier);
 
-addEventListener('keyup', e => {
+function auRelachement(e) {
   if (scene === 'final') {
     const af = actionFinale(e);
     if (af) entreesFinal[af] = false;
@@ -316,7 +323,8 @@ addEventListener('keyup', e => {
   }
   const a = actionDe(e);
   if (a) entrees[a] = false;
-});
+}
+addEventListener('keyup', auRelachement);
 
 addEventListener('blur', () => { relacherTout(); relacherFinal(); });
 
@@ -430,3 +438,102 @@ function majOrientation() {
 addEventListener('resize', majOrientation);
 addEventListener('orientationchange', () => setTimeout(majOrientation, 120));
 majOrientation();
+
+/* =============================================================================
+   LA MANETTE
+
+   Elle ne duplique RIEN. Chaque bouton est traduit en un evenement de la meme
+   forme que celui d'un clavier — { code, key } — et passe a `auClavier` /
+   `auRelachement`. La manette herite donc d'un coup de toute la navigation du
+   jeu : les menus, la boutique, le jukebox, la pause, le combat final, le
+   generique, la bande-annonce. Ajouter un ecran plus tard, c'est le rendre
+   jouable a la manette sans y penser.
+
+   Le mappage suit la disposition commune aux manettes reconnues par le
+   navigateur (« standard gamepad ») :
+
+     croix directionnelle et stick gauche  ->  fleches
+     bouton du bas   (A / croix)           ->  Espace   saut, valider
+     bouton de droite(B / rond)            ->  Echap    retour, pause
+     bouton de gauche(X / carre)           ->  X        frapper
+     bouton du haut  (Y / triangle)        ->  C        onde de choc
+     gachettes hautes L1 / R1              ->  Maj      courir
+     Start                                 ->  Echap    pause
+
+   Un navigateur ne signale une manette qu'apres une premiere pression : c'est
+   volontaire (empreinte numerique), et il n'y a rien a faire de plus que
+   d'interroger `navigator.getGamepads()` a chaque image.
+========================================================================== */
+
+const MANETTE_ZONE_MORTE = 0.45;      // en deca, le stick est considere au repos
+
+/* bouton (index standard) -> l'evenement clavier equivalent */
+const MANETTE_BOUTONS = {
+  0:  { code: 'Space',      key: ' ' },          // A / croix
+  1:  { code: 'Escape',     key: 'Escape' },     // B / rond
+  2:  { code: 'KeyX',       key: 'x' },          // X / carre
+  3:  { code: 'KeyC',       key: 'c' },          // Y / triangle
+  4:  { code: 'ShiftLeft',  key: 'Shift' },      // L1
+  5:  { code: 'ShiftLeft',  key: 'Shift' },      // R1
+  9:  { code: 'Escape',     key: 'Escape' },     // Start
+  12: { code: 'ArrowUp',    key: 'ArrowUp' },
+  13: { code: 'ArrowDown',  key: 'ArrowDown' },
+  14: { code: 'ArrowLeft',  key: 'ArrowLeft' },
+  15: { code: 'ArrowRight', key: 'ArrowRight' },
+};
+
+/* L'etat precedent, pour n'envoyer un evenement qu'au CHANGEMENT. Sans ça, un
+   bouton maintenu rejouerait son evenement soixante fois par seconde : le menu
+   defilerait a toute vitesse et Brad sauterait en boucle. */
+const manette = { boutons: {}, axes: {}, branchee: false };
+
+function evenementManette(enfonce, touche) {
+  if (enfonce) auClavier({ code: touche.code, key: touche.key });
+  else auRelachement({ code: touche.code, key: touche.key });
+}
+
+function etatManette(i, enfonce, touche) {
+  if (!!manette.boutons[i] === !!enfonce) return;
+  manette.boutons[i] = enfonce;
+  evenementManette(enfonce, touche);
+}
+
+function majManette() {
+  if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
+  let g = null;
+  const liste = navigator.getGamepads();
+  for (let i = 0; i < liste.length; i++) {
+    if (liste[i] && liste[i].connected) { g = liste[i]; break; }
+  }
+  if (!g) {
+    // Manette debranchee en cours de partie : on relache tout ce qu'elle
+    // tenait, sinon Brad continuerait de courir vers la droite pour toujours.
+    if (manette.branchee) {
+      for (const i of Object.keys(manette.boutons)) {
+        if (manette.boutons[i] && MANETTE_BOUTONS[i]) {
+          evenementManette(false, MANETTE_BOUTONS[i]);
+        }
+        manette.boutons[i] = false;
+      }
+      manette.branchee = false;
+      relacherTout();
+    }
+    return;
+  }
+  manette.branchee = true;
+
+  for (const i of Object.keys(MANETTE_BOUTONS)) {
+    const b = g.buttons[i];
+    etatManette(i, !!b && (b.pressed || b.value > 0.5), MANETTE_BOUTONS[i]);
+  }
+
+  // Le stick gauche double la croix directionnelle. On le traite comme quatre
+  // boutons virtuels pour que le reste du jeu n'ait rien a savoir d'un axe.
+  const ax = g.axes[0] || 0, ay = g.axes[1] || 0;
+  etatManette('sg', ax < -MANETTE_ZONE_MORTE, MANETTE_BOUTONS[14]);
+  etatManette('sd', ax > MANETTE_ZONE_MORTE, MANETTE_BOUTONS[15]);
+  etatManette('sh', ay < -MANETTE_ZONE_MORTE, MANETTE_BOUTONS[12]);
+  etatManette('sb', ay > MANETTE_ZONE_MORTE, MANETTE_BOUTONS[13]);
+}
+
+addEventListener('gamepadconnected', () => { manette.branchee = true; });
