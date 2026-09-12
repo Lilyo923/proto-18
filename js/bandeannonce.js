@@ -400,12 +400,68 @@ function appuiSousBA(px, ligne) {
   return false;
 }
 
+/* LES PLANS DE BOSS : BRAD SE BAT, IL NE COURT PLUS.
+
+   Il avançait tout droit comme dans les plans de niveau — il depassait donc le
+   boss en une demi-seconde et finissait « dans le coin droit en train de
+   courir sans s'arreter ». Un plan de boss ou l'adversaire est hors champ ne
+   montre rien.
+
+   Il a maintenant la conduite du robot qui gagne les combats dans la suite de
+   verification : aller au contact, S'ARRETER A PORTEE DE POING, frapper en
+   cadence, sauter quand la cible est au-dessus de lui. Le coup part DEVANT
+   Brad : se coller au centre de la cible ferait passer la zone d'attaque
+   derriere elle, et il taperait dans le vide en oscillant dessus.
+
+   Pendant un bonneteau (le Seraphin se duplique), il vise la copie qui EST le
+   boss — sinon la bande-annonce le montrerait en train de frapper des
+   mirages. */
+const BA_PORTEE = 44;        // distance de maintien, en pixels
+
+function combattreBA(dt) {
+  const b = arene.boss;
+  if (!b || b.etat === 'mort') return false;
+
+  const vraie = (arene.copies && arene.copies.find(c => c.vrai)) || null;
+  const cible = vraie || b;
+  const cx = cible.x + cible.w / 2;
+  const dx = cx - (brad.x + brad.w / 2);
+  const loin = Math.abs(dx) > BA_PORTEE;
+
+  entrees.droite = loin && dx > 0;
+  entrees.gauche = loin && dx < 0;
+  entrees.courir = Math.abs(dx) > BA_PORTEE * 2.2;
+  // Au contact, on garde l'orientation de l'approche : relacher la direction
+  // evite l'oscillation sur place.
+
+  const cadence = Math.floor(bandeAnnonce.age / 0.30);
+  const frappe = cadence !== Math.floor((bandeAnnonce.age - dt) / 0.30);
+  entrees.attaque = (bandeAnnonce.age * 1000 | 0) % 300 < 130;
+  if (frappe) attaquePresseeCeTick = true;
+
+  // On saute quand le centre de la cible est au-dessus du sien, et seulement
+  // quand on est presque dessous : sauter de loin ne sert a rien.
+  const centreCible = cible.y + cible.h / 2;
+  const dessus = centreCible < brad.y + brad.h / 2 - 6;
+  const proche = Math.abs(dx) < 70;
+  if (brad.auSol && proche && dessus) { entrees.saut = true; sautPresseCeTick = true; }
+  else if (!brad.auSol && brad.vy < 0) entrees.saut = true;
+  else entrees.saut = false;
+  return true;
+}
+
 function simulerPlanBA(dt) {
   const p = bandeAnnonce.plan;
   if (!p) return;
 
   if (p.genre === 'base') { hub.t += dt; hub.braddy.phase += dt; return; }
   if (p.genre !== 'jeu' && p.genre !== 'boss') return;
+
+  if (p.genre === 'boss' && combattreBA(dt)) {
+    rendreBradIntouchable();
+    pasDeSimulationBA(dt);
+    return;
+  }
 
   const ligne = brad.y + brad.h;
   const centre = brad.x + brad.w / 2;

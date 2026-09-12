@@ -1,4 +1,4 @@
-# Brad Bitt, mais le jeu — prototype 19
+# Brad Bitt, mais le jeu — prototype 20
 
 Le niveau d'introduction devient un vrai parcours, avec tout ce qui l'entoure :
 écran d'accueil, animation des studios, menu jouable, musique, sauvegarde et
@@ -2422,3 +2422,64 @@ comptent :
 
 Les coupures tombent à **4,0 ms** de leur temps en moyenne, **8,1 ms** au pire.
 Le vérificateur de géométrie passe sur les douze niveaux.
+
+---
+
+# Prototype 20 — Brad se bat contre les mini-boss
+
+## Le défaut
+
+Pendant les plans de boss, Brad avançait tout droit, exactement comme dans un
+plan de niveau. Il dépassait donc le boss en une demi-seconde et finissait
+**dans le coin droit, à courir contre le mur sans s'arrêter** — pendant que la
+caméra le suivait, l'adversaire hors champ. Un plan de boss où le boss n'est
+pas là ne montre rien.
+
+## La correction
+
+Les plans de boss ont maintenant leur propre conduite, celle du robot qui gagne
+les combats dans la suite de vérification :
+
+- **aller au contact, puis s'arrêter à 44 px** — à portée de poing, pas au
+  contact. Le coup part *devant* Brad : collé au centre de sa cible, la zone
+  d'attaque la dépasse et il tape dans le vide en oscillant dessus ;
+- **frapper en cadence**, environ trois fois par seconde ;
+- **sauter quand la cible est au-dessus de lui** et seulement quand il est
+  presque dessous — ce qui lui permet de retomber sur la tête du Séraphin, qui
+  vole ;
+- pendant un bonneteau, **viser la copie qui EST le boss**. Le Séraphin se
+  duplique : sans ça, la bande-annonce le montrerait en train de frapper des
+  mirages.
+
+## Mesure
+
+Sur la durée entière de chaque plan :
+
+| boss | coups portés | PV retirés | durée | distance max |
+|---|---|---|---|---|
+| Serra-Colosse | 9 | 4 | 3,4 s | 111 px |
+| Serra-Séraphin | 11 | 3 | 3,4 s | 104 px |
+| Serra-Balistique | 5 | 1 | 2,6 s | 101 px |
+
+**Le boss ne quitte jamais le cadre** — 0 image sur les trois plans.
+
+## Ce que le test mesure, et pourquoi
+
+La première version du test exigeait que le boss **perde des points de vie**.
+Elle échouait sur le Serra-Balistique, et à raison : il a une **coque** qui ne
+cède qu'à un astéroïde. Le frapper ne lui retire rien tant qu'elle tient, et
+exiger une perte de PV en 2,6 s revenait à exiger qu'un astéroïde tombe dans
+l'intervalle — c'est-à-dire à tirer au sort.
+
+Le test compte donc les **coups encaissés** : le clignotement du boss se
+déclenche à chaque coup reçu, qu'il perde des PV ou non. Ce qu'on veut prouver,
+c'est que Brad *le frappe*, pas qu'il le tue en trois secondes.
+
+## Vérification
+
+**265 vérifications, 0 échec.** Quatre sont nouvelles :
+
+- les trois boss apparaissent, vivants ;
+- **le boss ne quitte jamais le cadre** ;
+- **Brad reste à portée au lieu de courir au mur** (moins de 150 px) ;
+- **et il les frappe vraiment**.
