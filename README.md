@@ -1,4 +1,4 @@
-# Brad Bitt, mais le jeu — prototype 18
+# Brad Bitt, mais le jeu — prototype 19
 
 Le niveau d'introduction devient un vrai parcours, avec tout ce qui l'entoure :
 écran d'accueil, animation des studios, menu jouable, musique, sauvegarde et
@@ -2299,3 +2299,126 @@ Six manquent toujours. La septième, celle de la bande-annonce, est livrée.
 | `assets/audio/mega-kirby.m4a` | le combat final, à Lille |
 | `assets/audio/generique.m4a` | le générique |
 | ~~`assets/audio/bande-annonce.m4a`~~ | **livrée dans ce prototype** |
+
+---
+
+# Prototype 19 — la bande-annonce, corrigée
+
+Cinq retours, cinq corrections. Le principal d'abord.
+
+## 1. Brad tombait dans les trous
+
+**C'était le défaut le plus voyant, et la cause était bête :** il sautait **à
+intervalle fixe**, une fois par seconde environ, sans jamais regarder où il
+mettait les pieds. Quand un trou arrivait entre deux sauts, il tombait — et la
+caméra continuait d'avancer sans lui.
+
+Il saute maintenant **parce qu'il y a un trou**, avec les trois règles du robot
+qui traverse les niveaux dans la suite de vérification :
+
+1. pas de sol devant à une tuile → sauter ;
+2. **le bouton de saut se tient** pendant toute la montée. Le relâcher aussitôt
+   déclenche la gravité renforcée du saut court : Brad ne monte plus qu'au tiers
+   de la hauteur et retombe dans le trou qu'il visait ;
+3. en l'air, en train de tomber, au-dessus du vide, avec un appui derrière :
+   freiner.
+
+**Mesure : 0 chute sur 15 plans**, chacun simulé 3,5 s — plus longtemps
+qu'aucun plan ne dure. C'est vérifié à chaque exécution de la suite : une seule
+chute la fait échouer, parce que dans une bande-annonce une seule se voit.
+
+## 2. Pourquoi certaines coupures « sonnaient » mal
+
+Les coupures étaient justes à 8 ms près. Le problème n'était pas la précision,
+c'était **le choix du temps**.
+
+Le premier montage coupait toutes les deux mesures, donc sur les temps 1 et 3.
+Or la mesure des deux bandes de fréquence dit ceci :
+
+| temps | grave (< 120 Hz) | aigu (1,8–6 kHz) | |
+|---|---|---|---|
+| 1 | **110,8** | 68,1 | la grosse caisse |
+| 2 | 46,8 | **113,6** | la caisse claire |
+| 3 | 3,6 | 80,9 | **presque rien** |
+| 4 | 41,1 | **117,7** | la caisse claire |
+
+**Le temps 3 est un trou dans le morceau.** Une coupure sur trois tombait donc
+dans le silence — et c'est exactement ce qui s'entendait.
+
+Le montage coupe maintenant sur les temps **1 et 4** : des plans de 3 temps
+suivis d'un plan d'1 temps. Ce découpage pousse vers la mesure suivante au lieu
+de la couper en deux. Le seul temps 3 encore utilisé est dans la rafale, où la
+régularité porte la pulsation. Un test le vérifie et refuse toute coupure sur
+un temps faible hors rafale.
+
+## 3. Brad dort, puis ouvre les yeux
+
+Nouveau plan, exactement au format demandé : **10,3 s de noms de studios**
+(mesures 1 à 3), puis **3,4 s où Brad dort** (mesure 4) — et le refrain part
+sur le temps suivant.
+
+Une chambre, une fenêtre, la lune, des Zzz qui montent. À 2,5 s ses yeux
+s'ouvrent en deux éclats, un « ! » apparaît, il se redresse d'un coup, la
+lumière monte — et 0,9 s plus tard le montage explose sur la première mesure du
+refrain.
+
+Le plan est dessiné à la main plutôt que joué dans un niveau : il n'existe pas
+de chambre dans le jeu, et un plan aussi court doit être lisible tout de suite.
+
+**Un détail qui a demandé deux essais :** une rotation d'un quart de tour autour
+des pieds met l'axe du corps à la hauteur du point d'ancrage — donc la moitié de
+Brad sous le matelas. L'ancrage est relevé de la demi-épaisseur du corps quand
+il est couché, et ce décalage revient à zéro quand il se redresse.
+
+## 4. Le carré du logo HwR
+
+Les traits ne se voyaient pas : 1 pixel à 16 % d'opacité sur 104 pixels de côté,
+c'est invisible. Le filet fait maintenant **2 px à 62 %**, et la plaque est
+**translucide** pour que le fond de la bande-annonce passe au travers, comme
+demandé. Le carré se lit comme un cadre posé sur l'image, plus comme une tache
+opaque.
+
+## 5. Le centrage de « BRAD BITT »
+
+Le bloc était calé trop haut, et le filet supérieur mordait sur les capitales.
+Le bloc titre + sous-titre est maintenant centré sur le milieu de l'écran
+(150 → 212, centre 181 pour un écran de 360), et les deux filets sont posés
+symétriquement autour de lui.
+
+## 6. La mention finale
+
+La ligne de pied de page du dernier carton devient :
+
+> Plusieurs agents conversationnels ont été utilisés dans la création de ce jeu.
+> L'idée et le concept général ont été imaginés par un humain.
+
+## Le déroulé, à jour
+
+| mesures | temps | contenu |
+|---|---|---|
+| 1–2 | 0–6 | IMAGINe Studio |
+| 2–4 | 7–11 | HwR Engine |
+| 4 | 12–15 | **Brad dort, puis ouvre les yeux** |
+| 5 | 16, 19 | la discothèque · la ville |
+| 6 | 20 | **« 10 NIVEAUX FARFELUS »** |
+| 7 | 24, 27 | les tournesols · la vallée |
+| 8 | 28, 31 | la ville gelée · le manoir hanté |
+| 9 | 32 | **« DES BOSS QUI NE RIGOLENT PAS »** |
+| 10–12 | 36, 40, 44 | le Colosse · le Séraphin · le Balistique |
+| 12 | 47 | la lune |
+| 13 | 48 | **« UNE BASE, UNE BOUTIQUE ET UNE SALLE D'ARCADE »** |
+| 14 | 52, 55 | la base · les toits de Paris |
+| 15 | 56–59 | **rafale** : le tokamak, la discothèque, le manoir, la lune |
+| 16 | 60 | **Kirby 67 à contre-jour** |
+| 17–20 | 64, 68, 72, 76 | le titre · la bêta · la sortie · les studios |
+
+## Vérification
+
+**263 vérifications, 0 échec.** Deux sont nouvelles, et ce sont les deux qui
+comptent :
+
+- **Brad ne tombe dans aucun trou, sur aucun plan** — 15 plans, 3,5 s chacun ;
+- **aucune coupure ne tombe sur le temps faible de la mesure**, hors rafale.
+
+Les coupures tombent à **4,0 ms** de leur temps en moyenne, **8,1 ms** au pire.
+Le vérificateur de géométrie passe sur les douze niveaux.

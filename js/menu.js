@@ -644,9 +644,15 @@ function dessinerAccueil() {
      detache.
 -------------------------------------------------------------------------- */
 
-const HWR_PLAQUE = '#161a28';
-const HWR_FILET = 'rgba(255,255,255,.16)';
-const HWR_ENCRE = 0.74;      // part de la plaque occupee par les lettres
+/* Le filet etait trop discret : a 1 px et 16 % d'opacite, sur 104 pixels de
+   cote, il ne se voyait pas — « les traits qui entourent le logo ne sont pas
+   presents ». Il fait maintenant 2 px a 62 %, et la plaque est translucide
+   pour que le fond de la bande-annonce passe au travers. Le carre se lit comme
+   un cadre pose sur l'image, plus comme une tache opaque. */
+const HWR_PLAQUE = 'rgba(16,20,34,.80)';
+const HWR_FILET = 'rgba(236,240,252,.62)';
+const HWR_EPAISSEUR = 2;
+const HWR_ENCRE = 0.72;      // part de la plaque occupee par les lettres
 const HWR_RAYON = 0.22;      // rayon des coins, en part du cote
 
 function carreArrondi(x, y, cote, rayon) {
@@ -667,12 +673,15 @@ function carreArrondi(x, y, cote, rayon) {
 /* Le logo complet, centre sur (cx, cy). C'est la seule fonction a appeler :
    l'intro, la page des credits et la bande-annonce passent toutes par elle. */
 function dessinerLogoHwr(cx, cy, cote) {
-  const x = cx - cote / 2, y = cy - cote / 2;
-  carreArrondi(x, y, cote, cote * HWR_RAYON);
+  const m = HWR_EPAISSEUR / 2;          // le trait deborde de la moitie de son
+  const x = cx - cote / 2 + m;          // epaisseur : on rentre le carre d'autant
+  const y = cy - cote / 2 + m;
+  const c = cote - HWR_EPAISSEUR;
+  carreArrondi(x, y, c, c * HWR_RAYON);
   ctx.fillStyle = HWR_PLAQUE;
   ctx.fill();
   ctx.strokeStyle = HWR_FILET;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = HWR_EPAISSEUR;
   ctx.stroke();
   if (!logos.hwr) return;
   const e = cote * HWR_ENCRE;

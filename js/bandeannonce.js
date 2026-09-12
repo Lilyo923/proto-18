@@ -56,36 +56,65 @@ const DUREE_BA = instantBA(BA.temps);
    `flash`  : un eclair blanc sur la coupure, pour les entrees en force
 -------------------------------------------------------------------------- */
 
-const PLANS_BA = [
-  /* --- INTRO : mesures 1 a 4, la musique monte -------------------------- */
-  { b: 0,  genre: 'logo', quoi: 'imagine' },
-  { b: 6,  genre: 'logo', quoi: 'hwr' },
-  { b: 12, genre: 'jeu', niveau: 'niveau1', x: 40, marche: true },
+/* SUR QUEL TEMPS COUPER ?
 
-  /* --- REFRAIN : mesures 5 a 16, le montage ----------------------------- */
-  { b: 16, genre: 'jeu', niveau: 'niveau4', x: 177, flash: true },
-  { b: 18, genre: 'jeu', niveau: 'niveau2', x: 114 },
-  { b: 20, genre: 'titre', haut: '10 NIVEAUX', bas: 'FARFELUS' },
-  { b: 24, genre: 'jeu', niveau: 'niveau1', x: 51 },
-  { b: 26, genre: 'jeu', niveau: 'niveau3', x: 135 },
-  { b: 28, genre: 'jeu', niveau: 'niveau5', x: 54 },
-  { b: 30, genre: 'jeu', niveau: 'niveau6', x: 149 },
+   Le premier montage coupait toutes les deux mesures, donc sur les temps 1 et
+   3. C'est la que « des fois, les changements de plan sont plus ou moins en
+   raccord ». Les coupures etaient pourtant justes a 8 ms pres : le probleme
+   n'etait pas la precision, c'etait LE CHOIX DU TEMPS.
+
+   La mesure des deux bandes de frequence le dit :
+
+     temps 1 : grave 110,8  aigu  68,1   <- la grosse caisse
+     temps 2 : grave  46,8  aigu 113,6   <- la caisse claire
+     temps 3 : grave   3,6  aigu  80,9   <- presque rien
+     temps 4 : grave  41,1  aigu 117,7   <- la caisse claire
+
+   Le temps 3 est un trou. Une coupure sur trois tombait donc dans le silence
+   du morceau, et c'est exactement ce qui s'entend.
+
+   Le montage coupe maintenant sur les temps 1 et 4 — la grosse caisse et la
+   caisse claire — en plans de 3 temps suivis d'un plan d'1 temps. Ce decoupage
+   pousse vers la mesure suivante au lieu de la couper en deux. Le seul temps 3
+   utilise est dans la rafale, ou la regularite porte la pulsation. */
+
+const PLANS_BA = [
+  /* --- INTRO : mesures 1 a 4 -------------------------------------------
+     Dix secondes de studios, puis trois secondes et demie ou Brad dort et
+     ouvre les yeux. Le refrain part sur le temps suivant. */
+  { b: 0,  genre: 'logo', quoi: 'imagine' },
+  /* Au temps 7, pas au 6 : le temps 3 de la mesure est le trou du morceau
+     (grave 3,6 contre 110,8 sur le temps 1). Le temps 7 est un temps 4 —
+     la caisse claire — et il lance la mesure 3, celle ou l'intro monte. */
+  { b: 7,  genre: 'logo', quoi: 'hwr' },
+  { b: 12, genre: 'dort' },
+
+  /* --- REFRAIN : mesures 5 a 16 ----------------------------------------
+     Coupures sur les temps 1 et 4 de chaque mesure : 3 temps, puis 1. */
+  { b: 16, genre: 'jeu', niveau: 'niveau4', x: 177, flash: true },  // mes. 5
+  { b: 19, genre: 'jeu', niveau: 'niveau2', x: 114 },
+  { b: 20, genre: 'titre', haut: '10 NIVEAUX', bas: 'FARFELUS' },   // mes. 6
+  { b: 24, genre: 'jeu', niveau: 'niveau1', x: 51 },                // mes. 7
+  { b: 27, genre: 'jeu', niveau: 'niveau3', x: 135 },
+  { b: 28, genre: 'jeu', niveau: 'niveau5', x: 54 },                // mes. 8
+  { b: 31, genre: 'jeu', niveau: 'niveau6', x: 149 },
   { b: 32, genre: 'titre', haut: 'DES BOSS', bas: 'QUI NE RIGOLENT PAS' },
-  { b: 36, genre: 'boss', niveau: 'niveau3', flash: true },
-  { b: 38, genre: 'boss', niveau: 'niveau6' },
-  { b: 40, genre: 'boss', niveau: 'niveau9' },
-  { b: 42, genre: 'jeu', niveau: 'niveau9', x: 171 },
-  { b: 44, genre: 'titre', haut: 'UNE BASE, UNE BOUTIQUE', bas: 'ET UNE SALLE D\'ARCADE' },
-  { b: 48, genre: 'base' },
-  { b: 52, genre: 'jeu', niveau: 'niveau7', x: 204 },     // la tour Eiffel est dans le cadre
-  { b: 54, genre: 'jeu', niveau: 'niveau8', x: 124 },
-  // Rafale : un plan par temps, la ou la musique cogne le plus.
-  { b: 56, genre: 'jeu', niveau: 'niveau4', x: 117, flash: true },
-  { b: 57, genre: 'jeu', niveau: 'niveau6', x: 131 },
-  { b: 58, genre: 'jeu', niveau: 'niveau7', x: 120 },
+  { b: 36, genre: 'boss', niveau: 'niveau3', flash: true },         // mes. 10
+  { b: 40, genre: 'boss', niveau: 'niveau6' },                      // mes. 11
+  { b: 44, genre: 'boss', niveau: 'niveau9' },                      // mes. 12
+  { b: 47, genre: 'jeu', niveau: 'niveau9', x: 171 },
+  { b: 48, genre: 'titre', haut: 'UNE BASE, UNE BOUTIQUE',          // mes. 13
+    bas: 'ET UNE SALLE D\'ARCADE' },
+  { b: 52, genre: 'base' },                                         // mes. 14
+  { b: 55, genre: 'jeu', niveau: 'niveau7', x: 204 },  // la tour est dans le fond
+  // Rafale : un plan par temps. C'est la que la musique cogne le plus fort,
+  // et le seul endroit ou le temps 3 sert.
+  { b: 56, genre: 'jeu', niveau: 'niveau8', x: 124, flash: true },  // mes. 15
+  { b: 57, genre: 'jeu', niveau: 'niveau4', x: 117 },
+  { b: 58, genre: 'jeu', niveau: 'niveau6', x: 131 },
   { b: 59, genre: 'jeu', niveau: 'niveau9', x: 123 },
   // Et on retient son souffle une mesure entiere.
-  { b: 60, genre: 'silhouette' },
+  { b: 60, genre: 'silhouette' },                                   // mes. 16
 
   /* --- OUTRO : mesures 17 a 20, la musique redescend -------------------- */
   { b: 64, genre: 'titre', haut: 'BRAD BITT', bas: 'mais le jeu', logo: true },
@@ -320,6 +349,57 @@ function pasDeSimulationBA(dt) {
   if (scene !== 'bandeannonce') scene = 'bandeannonce';
 }
 
+/* BRAD NE DOIT PAS TOMBER.
+
+   C'etait le defaut le plus voyant du premier montage : Brad courait droit
+   devant, ratait un trou, disparaissait par le bas — et la camera continuait
+   d'avancer sans lui. Sur vingt plans, ça arrivait a la moitie.
+
+   La cause etait bete : il sautait A INTERVALLE FIXE, une fois par seconde
+   environ, sans regarder ou il mettait les pieds. Il saute maintenant PARCE
+   QU'IL Y A UN TROU, exactement comme le robot qui traverse les niveaux dans
+   la suite de verification. Trois regles, et elles suffisent :
+
+   1. pas de sol devant a une tuile -> sauter ;
+   2. le bouton de saut se TIENT pendant toute la montee. Le relacher aussitot
+      declenche la gravite renforcee du saut court : Brad ne monte plus qu'au
+      tiers de la hauteur et retombe dans le trou qu'il visait ;
+   3. en l'air, en train de tomber, au-dessus du vide, avec un appui derriere :
+      freiner. C'est le reflexe qu'a un joueur et que n'a pas une machine.
+*/
+function ilYaDuSolBA(px, ligne) {
+  if (typeof solSousOuDessous === 'function' && solSousOuDessous(px, ligne, 130)) return true;
+  if (typeof DALLES !== 'undefined') {
+    for (const d of DALLES) {
+      if (d.etat === 'tombee') continue;
+      if (px >= d.x && px <= d.x + d.w && Math.abs(d.y - ligne) < 30) return true;
+    }
+  }
+  if (typeof MOBILES !== 'undefined') {
+    for (const m of MOBILES) {
+      if (px >= m.x - 20 && px <= m.x + m.w + 20 && Math.abs(m.y - ligne) < 30) return true;
+    }
+  }
+  return false;
+}
+
+/* Un appui quelconque sous cette abscisse, a n'importe quelle profondeur. */
+function appuiSousBA(px, ligne) {
+  for (const s of solides) if (px >= s.x && px <= s.x + s.w && s.y >= ligne - 8) return true;
+  for (const t of traversantes) if (px >= t.x && px <= t.x + t.w && t.y >= ligne - 8) return true;
+  if (typeof DALLES !== 'undefined') {
+    for (const d of DALLES) {
+      if (d.etat !== 'tombee' && px >= d.x && px <= d.x + d.w && d.y >= ligne - 8) return true;
+    }
+  }
+  if (typeof MOBILES !== 'undefined') {
+    for (const m of MOBILES) {
+      if (px >= m.x - 10 && px <= m.x + m.w + 10 && m.y >= ligne - 8) return true;
+    }
+  }
+  return false;
+}
+
 function simulerPlanBA(dt) {
   const p = bandeAnnonce.plan;
   if (!p) return;
@@ -327,20 +407,24 @@ function simulerPlanBA(dt) {
   if (p.genre === 'base') { hub.t += dt; hub.braddy.phase += dt; return; }
   if (p.genre !== 'jeu' && p.genre !== 'boss') return;
 
+  const ligne = brad.y + brad.h;
+  const centre = brad.x + brad.w / 2;
+  const solDevant = ilYaDuSolBA(brad.x + brad.w + 26, ligne);
+  const enChuteAuDessusDuVide = !brad.auSol && brad.vy > 0 && !appuiSousBA(centre, ligne);
+  const freiner = enChuteAuDessusDuVide &&
+                  !appuiSousBA(centre + 70, ligne) && appuiSousBA(centre - 70, ligne);
+
   // Brad avance : c'est ce qui fait defiler le decor et reveille les Serra.
   // Un plan « marche » le laisse au pas, pour les moments calmes.
-  entrees.droite = true;
-  entrees.gauche = false;
-  entrees.courir = !p.marche;
-  entrees.attaque = p.genre === 'boss' && Math.floor(bandeAnnonce.age * 4) % 3 === 0;
-  if (p.genre === 'boss' && Math.floor(bandeAnnonce.age * 4) % 3 === 0) {
-    attaquePresseeCeTick = true;
-  }
-  // Un saut par mesure : sans ça, Brad glisse au sol et le plan est plat.
-  const veutSauter = brad.auSol && Math.floor(bandeAnnonce.age / 1.1) !==
-                                   Math.floor((bandeAnnonce.age - dt) / 1.1);
-  if (veutSauter) { entrees.saut = true; sautPresseCeTick = true; }
-  else if (!brad.auSol && brad.vy < 0) entrees.saut = true;
+  entrees.droite = !freiner;
+  entrees.gauche = freiner;
+  entrees.courir = !p.marche && !freiner;
+  const frappe = p.genre === 'boss' && Math.floor(bandeAnnonce.age * 4) % 3 === 0;
+  entrees.attaque = frappe;
+  if (frappe) attaquePresseeCeTick = true;
+
+  if (brad.auSol && !solDevant) { entrees.saut = true; sautPresseCeTick = true; }
+  else if (!brad.auSol && brad.vy < 0) entrees.saut = true;   // on TIENT le bouton
   else entrees.saut = false;
 
   rendreBradIntouchable();
@@ -362,6 +446,7 @@ function dessinerBandeAnnonce() {
     case 'boss':        rendreNiveau(); break;
     case 'base':        dessinerHub(); break;
     case 'logo':        planLogoBA(p); break;
+    case 'dort':        planDortBA(p); break;
     case 'titre':       planTitreBA(p); break;
     case 'silhouette':  planSilhouetteBA(p); break;
     case 'dates':       planDatesBA(p); break;
@@ -431,12 +516,21 @@ function planTitreBA(p) {
   ctx.scale(e.echelle, e.echelle);
   ctx.translate(-LARGEUR / 2, -HAUTEUR / 2);
 
+  /* CENTRAGE.
+
+     Le bloc etait cale trop haut : le titre sur une ligne de base a 158, et le
+     filet superieur a 126 mordait sur les capitales. On centre maintenant le
+     BLOC (titre + sous-titre) sur le milieu de l'ecran, et les deux filets
+     sont poses symetriquement autour de lui. */
+  let hautFilet, basFilet;
   if (p.logo) {
-    texteCentre(p.haut, 158, 'bold 42px system-ui, sans-serif', '#f2f3f8');
-    texteCentre(p.bas, 190, 'italic 17px system-ui, sans-serif', '#e8b62c');
+    texteCentre(p.haut, 180, 'bold 42px system-ui, sans-serif', '#f2f3f8');
+    texteCentre(p.bas, 208, 'italic 17px system-ui, sans-serif', '#e8b62c');
+    hautFilet = 126; basFilet = 236;
   } else {
-    texteCentre(p.haut, 162, 'bold 27px system-ui, sans-serif', '#e8b62c');
-    texteCentre(p.bas, 196, 'bold 19px system-ui, sans-serif', '#f2f3f8');
+    texteCentre(p.haut, 170, 'bold 27px system-ui, sans-serif', '#e8b62c');
+    texteCentre(p.bas, 202, 'bold 19px system-ui, sans-serif', '#f2f3f8');
+    hautFilet = 132; basFilet = 230;
   }
   ctx.restore();
   ctx.globalAlpha = 1;
@@ -444,8 +538,8 @@ function planTitreBA(p) {
   // Deux filets qui s'ecartent sur le premier temps : le carton respire.
   const l = 60 + 150 * Math.min(1, bandeAnnonce.age / 0.5);
   ctx.fillStyle = 'rgba(232,182,44,.3)';
-  ctx.fillRect(LARGEUR / 2 - l / 2, 126, l, 1);
-  ctx.fillRect(LARGEUR / 2 - l / 2, 216, l, 1);
+  ctx.fillRect(LARGEUR / 2 - l / 2, hautFilet, l, 1);
+  ctx.fillRect(LARGEUR / 2 - l / 2, basFilet, l, 1);
 }
 
 /* Kirby 67 a CONTRE-JOUR. On ne montre ni son visage ni son arene : la
@@ -488,6 +582,122 @@ function planSilhouetteBA(p) {
   ctx.globalAlpha = 1;
 }
 
+/* -----------------------------------------------------------------------------
+   BRAD DORT, PUIS OUVRE LES YEUX
+
+   Le plan qui fait basculer la bande-annonce. Trois secondes et demie : deux
+   secondes et demie de sommeil, puis il se redresse d'un coup — et le refrain
+   part sur le temps suivant.
+
+   Dessine a la main plutot que joue dans un niveau : il n'existe pas de
+   chambre dans le jeu, et un plan aussi court doit etre lisible tout de suite.
+-------------------------------------------------------------------------- */
+
+const BA_REVEIL = 2.5;        // a quel age du plan il ouvre les yeux
+
+function planDortBA(p) {
+  const age = bandeAnnonce.age;
+  const reveille = age >= BA_REVEIL;
+  const depuis = Math.max(0, age - BA_REVEIL);
+  // La lumiere monte d'un coup au reveil, puis se stabilise.
+  const lum = reveille ? Math.min(1, depuis / 0.35) : 0;
+
+  /* La chambre occupe tout le cadre. Premiere version : un lit minuscule pose
+     bas, et cent pixels de noir en dessous. Le sol est maintenant a 296, le
+     lit large, et Brad agrandi d'un tiers — a cette taille on voit qu'il dort,
+     ce qui est tout l'interet du plan. */
+  const SOL = 296, ECH = 1.4;
+
+  ctx.fillStyle = '#0b0e18';
+  ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
+
+  // fenetre, avec la lune
+  const fx = 74, fy = 48, fw = 132, fh = 104;
+  ctx.fillStyle = '#16203a';
+  ctx.fillRect(fx, fy, fw, fh);
+  ctx.fillStyle = 'rgba(214,228,255,' + (0.55 + 0.3 * lum).toFixed(3) + ')';
+  ctx.beginPath(); ctx.arc(fx + 92, fy + 34, 15, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(214,228,255,.10)';
+  for (let i = 0; i < 14; i++) {
+    ctx.fillRect(fx + 8 + (i * 37) % (fw - 14), fy + 12 + (i * 53) % (fh - 20), 2, 2);
+  }
+  ctx.fillStyle = '#0b0e18';
+  ctx.fillRect(fx + fw / 2 - 3, fy, 6, fh);
+  ctx.fillRect(fx, fy + fh / 2 - 3, fw, 6);
+  ctx.strokeStyle = 'rgba(255,255,255,.22)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(fx + 1.5, fy + 1.5, fw - 3, fh - 3);
+
+  // mur, puis plinthe et sol
+  ctx.fillStyle = 'rgba(255,255,255,' + (0.035 + 0.05 * lum).toFixed(3) + ')';
+  ctx.fillRect(0, 0, LARGEUR, SOL);
+  ctx.fillStyle = 'rgba(255,255,255,.05)';
+  ctx.fillRect(0, SOL - 8, LARGEUR, 8);
+  ctx.fillStyle = '#070912';
+  ctx.fillRect(0, SOL, LARGEUR, HAUTEUR - SOL);
+
+  // --- le lit
+  const litX = 224, litY = SOL - 42, litL = 262;
+  ctx.fillStyle = '#1d1726';
+  ctx.fillRect(litX - 14, litY - 58, 16, 100);              // tete de lit
+  ctx.fillRect(litX + litL - 2, litY - 32, 16, 74);         // pied de lit
+  ctx.fillStyle = '#2a2033';
+  ctx.fillRect(litX, litY, litL, 42);                       // matelas
+  ctx.fillStyle = '#3b2c47';
+  ctx.fillRect(litX, litY - 6, litL, 9);                    // drap
+  ctx.fillStyle = '#d9dced';
+  ctx.fillRect(litX + 14, litY - 17, 56, 15);               // oreiller
+
+  /* --- Brad
+
+     Couche, il tourne d'un quart de tour : ses pieds restent au point d'ancrage
+     et sa tete part vers l'oreiller, a gauche. Mais une rotation autour des
+     pieds met son AXE DU CORPS a la hauteur du point d'ancrage — donc la
+     moitie de lui sous le matelas. Premiere version : Brad a moitie enfonce
+     dans le lit. On releve donc l'ancrage de la demi-epaisseur du corps quand
+     il est couche, et on ramene ce decalage a zero quand il se redresse. */
+  const cx = litX + 120, sol = litY;
+  const a = reveille ? Math.min(1, depuis / 0.3) : 0;
+  ctx.save();
+  ctx.translate(cx, sol - 24 * (1 - a));
+  ctx.scale(ECH, ECH);
+  // Un petit depassement au redressement, pour que le mouvement claque.
+  ctx.rotate(-Math.PI / 2 * (1 - a) + (reveille ? Math.sin(a * Math.PI) * 0.12 : 0));
+  dessinerPlancheBrad(0, 0, 1, 1,
+    { ligne: BRAD_PLANCHE.repos, colonne: Math.floor(age * 2) % 4 });
+  ctx.restore();
+
+  // --- les Zzz, tant qu'il dort
+  if (!reveille) {
+    ctx.textAlign = 'left';
+    for (let i = 0; i < 3; i++) {
+      const t = (age * 0.55 + i * 0.34) % 1;
+      ctx.globalAlpha = Math.max(0, 0.8 * (1 - t));
+      ctx.font = 'bold ' + (11 + i * 5) + 'px system-ui, sans-serif';
+      ctx.fillStyle = '#cfd6ee';
+      ctx.fillText('z', cx + 34 + t * 44, litY - 34 - t * 76);
+    }
+    ctx.globalAlpha = 1;
+  } else if (depuis < 0.55) {
+    // Les yeux qui s'ouvrent : deux eclats, puis un « ! ».
+    const a = 1 - depuis / 0.55;
+    ctx.fillStyle = 'rgba(255,255,255,' + (a * 0.95).toFixed(3) + ')';
+    ctx.fillRect(cx - 10, sol - 56, 6, 4);
+    ctx.fillRect(cx + 3, sol - 56, 6, 4);
+    ctx.font = 'bold 26px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(232,182,44,' + a.toFixed(3) + ')';
+    ctx.fillText('!', cx + 46, sol - 58 - (1 - a) * 12);
+    ctx.textAlign = 'left';
+  }
+
+  // Un voile sombre qui se leve au reveil : la chambre etait une veilleuse.
+  if (lum < 1) {
+    ctx.fillStyle = 'rgba(2,3,8,' + (0.34 * (1 - lum)).toFixed(3) + ')';
+    ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
+  }
+}
+
 function planDatesBA(p) {
   const e = entreeCarton();
   ctx.globalAlpha = e.alpha;
@@ -498,17 +708,26 @@ function planDatesBA(p) {
   ctx.globalAlpha = 1;
 }
 
+/* La mention sur les agents conversationnels. Elle remplace la ligne de pied
+   de page, a l'endroit le plus lu d'une fin de bande-annonce : juste sous les
+   noms des studios. Meme fond que le generique, meme franchise. */
+const MENTION_IA_BA = [
+  'Plusieurs agents conversationnels ont été utilisés dans la création',
+  'de ce jeu. L\'idée et le concept général ont été imaginés par un humain.',
+];
+
 function planStudiosBA(p) {
   const e = entreeCarton();
   ctx.globalAlpha = e.alpha;
   if (logos.imagine) {
-    const w = 168, h = logos.imagine.height * w / logos.imagine.width;
-    ctx.drawImage(logos.imagine, LARGEUR / 2 - w / 2, 116, w, h);
+    const w = 156, h = logos.imagine.height * w / logos.imagine.width;
+    ctx.drawImage(logos.imagine, LARGEUR / 2 - w / 2, 96, w, h);
   }
-  dessinerLogoHwr(LARGEUR / 2, 218, 68);
-  texteCentre('IMAGINe Studio  ×  HwR Engine', 272,
+  dessinerLogoHwr(LARGEUR / 2, 196, 64);
+  texteCentre('IMAGINe Studio  ×  HwR Engine', 248,
               '11px system-ui, sans-serif', 'rgba(255,255,255,.55)');
-  texteCentre('bradbitt', 291, 'italic 10px system-ui, sans-serif',
-              'rgba(255,255,255,.3)');
+  MENTION_IA_BA.forEach((ligne, i) =>
+    texteCentre(ligne, 278 + i * 15, '10px system-ui, sans-serif',
+                'rgba(255,255,255,.42)'));
   ctx.globalAlpha = 1;
 }
