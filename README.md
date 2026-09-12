@@ -1,4 +1,4 @@
-# Brad Bitt, mais le jeu — prototype 21
+# Brad Bitt, mais le jeu — prototype 22
 
 Le niveau d'introduction devient un vrai parcours, avec tout ce qui l'entoure :
 écran d'accueil, animation des studios, menu jouable, musique, sauvegarde et
@@ -2597,3 +2597,37 @@ sont nouvelles :
 - **débrancher la manette relâche tout** ;
 - la croix navigue dans le menu, le bouton du bas valide, celui de droite sert
   d'Échap.
+
+---
+
+# Prototype 22 — le logo nu, et plus rien à l'écran
+
+## 1. La plaque et le filet du logo HwR sont retirés
+
+Vu sur matériel, écran d'ordinateur et téléphone : **le fichier porte déjà ses
+propres traits.** Les quatre marques de coupe dans les coins de
+`logo-hwr.png` — celles que je proposais de masquer — forment le cadre autour
+des lettres. Ma plaque arrondie et mon filet faisaient donc double emploi, et
+sur un grand écran les deux ensemble se lisaient mal.
+
+Le logo se dessine maintenant **nu**, sur le fond de la scène. `dessinerLogoHwr`
+tient en deux lignes.
+
+Le tracé de carré arrondi qui allait avec a été supprimé, pas laissé en place :
+du code mort est du code qu'on croit encore utile.
+
+**Le test a été retourné plutôt que supprimé.** Il vérifiait qu'une plaque se
+détachait du fond ; il vérifie maintenant l'inverse — que les lettres sont bien
+là, et que **rien n'est dessiné autour**. On lit un point à l'endroit exact où
+la plaque se trouvait : le fichier n'y pose aucun pixel, donc ce point doit
+avoir la couleur du fond à moins de 6 unités près.
+
+## 2. Plus d'indication « Échap » pendant la bande-annonce
+
+Elle se serait retrouvée dans l'enregistrement. Une bande-annonce qui affiche
+ses propres commandes n'est plus une bande-annonce. **La touche fonctionne
+toujours — elle ne s'annonce plus.**
+
+## Vérification
+
+**275 vérifications, 0 échec.**

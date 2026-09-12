@@ -565,7 +565,11 @@ function dessinerBandeAnnonce() {
     ctx.fillStyle = 'rgba(255,255,255,' + (bandeAnnonce.flash / 0.16 * 0.55).toFixed(3) + ')';
     ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
   }
-  indicationBA();
+  /* AUCUNE INDICATION A L'ECRAN.
+
+     Un « Échap » en bas a droite se retrouve dans l'enregistrement, et une
+     bande-annonce qui affiche ses propres commandes n'est plus une
+     bande-annonce. La touche fonctionne toujours — elle ne s'annonce plus. */
 }
 
 /* Le tout premier plan monte du noir, le tout dernier y redescend : une
@@ -579,15 +583,6 @@ function voileBA() {
   if (noir <= 0) return;
   ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, noir).toFixed(3) + ')';
   ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
-}
-
-function indicationBA() {
-  if (bandeAnnonce.t < 1.5 || bandeAnnonce.t > DUREE_BA - 2) return;
-  ctx.font = '9px system-ui, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(255,255,255,.22)';
-  ctx.fillText('Échap', LARGEUR - 8, HAUTEUR - 8);
-  ctx.textAlign = 'left';
 }
 
 /* L'apparition d'un carton : sec, cale sur le temps. Le texte grandit de 4 %

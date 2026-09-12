@@ -644,48 +644,23 @@ function dessinerAccueil() {
      detache.
 -------------------------------------------------------------------------- */
 
-/* Le filet etait trop discret : a 1 px et 16 % d'opacite, sur 104 pixels de
-   cote, il ne se voyait pas — « les traits qui entourent le logo ne sont pas
-   presents ». Il fait maintenant 2 px a 62 %, et la plaque est translucide
-   pour que le fond de la bande-annonce passe au travers. Le carre se lit comme
-   un cadre pose sur l'image, plus comme une tache opaque. */
-const HWR_PLAQUE = 'rgba(16,20,34,.80)';
-const HWR_FILET = 'rgba(236,240,252,.62)';
-const HWR_EPAISSEUR = 2;
-const HWR_ENCRE = 0.72;      // part de la plaque occupee par les lettres
-const HWR_RAYON = 0.22;      // rayon des coins, en part du cote
+/* LE LOGO HwR SE DESSINE NU.
 
-function carreArrondi(x, y, cote, rayon) {
-  const r = Math.min(rayon, cote / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + cote - r, y);
-  ctx.arcTo(x + cote, y, x + cote, y + r, r);
-  ctx.lineTo(x + cote, y + cote - r);
-  ctx.arcTo(x + cote, y + cote, x + cote - r, y + cote, r);
-  ctx.lineTo(x + r, y + cote);
-  ctx.arcTo(x, y + cote, x, y + cote - r, r);
-  ctx.lineTo(x, y + r);
-  ctx.arcTo(x, y, x + r, y, r);
-  ctx.closePath();
-}
+   Il a eu droit a une plaque arrondie et a un filet, parce que le carre du
+   logo semblait manquer a l'ecran. Verdict apres essai sur les deux supports :
+   le fichier porte deja ses propres traits — quatre marques de coupe dans les
+   coins — et le cadre ajoute faisait double emploi. Sur un grand ecran, les
+   deux ensemble se lisaient mal.
 
-/* Le logo complet, centre sur (cx, cy). C'est la seule fonction a appeler :
-   l'intro, la page des credits et la bande-annonce passent toutes par elle. */
+   On garde donc le logo tel qu'il est, sur le fond de la scene. La plaque, le
+   filet et le trace de carre arrondi qui allait avec ont ete retires plutot
+   que laisses en place : du code mort est du code qu'on croit encore utile.
+
+   Une seule fonction, appelee par l'intro, la page des credits et la
+   bande-annonce. */
 function dessinerLogoHwr(cx, cy, cote) {
-  const m = HWR_EPAISSEUR / 2;          // le trait deborde de la moitie de son
-  const x = cx - cote / 2 + m;          // epaisseur : on rentre le carre d'autant
-  const y = cy - cote / 2 + m;
-  const c = cote - HWR_EPAISSEUR;
-  carreArrondi(x, y, c, c * HWR_RAYON);
-  ctx.fillStyle = HWR_PLAQUE;
-  ctx.fill();
-  ctx.strokeStyle = HWR_FILET;
-  ctx.lineWidth = HWR_EPAISSEUR;
-  ctx.stroke();
   if (!logos.hwr) return;
-  const e = cote * HWR_ENCRE;
-  ctx.drawImage(logos.hwr, cx - e / 2, cy - e / 2, e, e);
+  ctx.drawImage(logos.hwr, cx - cote / 2, cy - cote / 2, cote, cote);
 }
 
 function dessinerEcranLogos() {
